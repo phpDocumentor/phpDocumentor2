@@ -82,13 +82,13 @@ class ProjectDescriptorBuilder
      *
      * @param class-string<TDescriptor> $type
      *
-     * @return TDescriptor|null
+     * @return TDescriptor|NullDescriptor
      *
      * @throws InvalidArgumentException If no Assembler could be found that matches the given data.
      *
      * @template TDescriptor of Descriptor
      */
-    public function buildDescriptor(object $data, string $type) : ?Descriptor
+    public function buildDescriptor(object $data, string $type) : Descriptor
     {
         $assembler = $this->getAssembler($data, $type);
         if (!$assembler) {
@@ -114,8 +114,8 @@ class ProjectDescriptorBuilder
      *
      * @return AssemblerInterface<TDescriptor, TInput>|null
      *
-     * @template TInput as object
-     * @template TDescriptor as Descriptor
+     * @template TInput of object
+     * @template TDescriptor of Descriptor
      */
     public function getAssembler(object $data, string $type) : ?AssemblerInterface
     {
@@ -127,11 +127,11 @@ class ProjectDescriptorBuilder
      *
      * @param TDescriptor $descriptor
      *
-     * @return TDescriptor|null
+     * @return TDescriptor|NullDescriptor
      *
-     * @template TDescriptor as Filterable
+     * @template TDescriptor of Filterable
      */
-    public function filter(Filterable $descriptor) : ?Filterable
+    public function filter(Filterable $descriptor) : Filterable
     {
         return $this->filter->filter($descriptor);
     }
@@ -142,11 +142,11 @@ class ProjectDescriptorBuilder
      *
      * @param TDescriptor $descriptor
      *
-     * @return TDescriptor|null
+     * @return TDescriptor|NullDescriptor
      *
-     * @template TDescriptor as Descriptor
+     * @template TDescriptor of Descriptor
      */
-    protected function filterDescriptor(Descriptor $descriptor) : ?Descriptor
+    protected function filterDescriptor(Descriptor $descriptor) : Descriptor
     {
         if (!$descriptor instanceof Filterable) {
             return $descriptor;
@@ -175,7 +175,7 @@ class ProjectDescriptorBuilder
 
         foreach ($project->getFiles() as $file) {
             $descriptor = $this->buildDescriptor($file, FileDescriptor::class);
-            if ($descriptor === null) {
+            if ($descriptor instanceof NullDescriptor) {
                 continue;
             }
 
@@ -185,9 +185,15 @@ class ProjectDescriptorBuilder
         $namespaces = $this->getProjectDescriptor()->getIndexes()->fetch('namespaces', new Collection());
 
         foreach ($project->getNamespaces() as $namespace) {
+            $namespaceDescriptor = $this->buildDescriptor($namespace, NamespaceDescriptor::class);
+
+            if ($namespaceDescriptor instanceof NullDescriptor) {
+                continue;
+            }
+
             $namespaces->set(
                 (string) $namespace->getFqsen(),
-                $this->buildDescriptor($namespace, NamespaceDescriptor::class)
+                $namespaceDescriptor
             );
         }
     }
