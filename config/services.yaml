@@ -105,6 +105,26 @@ services:
         resource: '../src/phpDocumentor/Compiler'
 
     ###################################################################################
+    ## Definitions for specific flow related services #################################
+    ###################################################################################
+
+    phpdoc.flow.parser_provider:
+      class: phpDocumentor\FlowService\ServiceProvider
+      arguments: [!tagged_iterator { tag: 'phpdoc.flow.parser', index_by: 'documentation_type' }]
+
+    phpdoc.flow.transformer_provider:
+      class: phpDocumentor\FlowService\ServiceProvider
+      arguments: [!tagged_iterator { tag: 'phpdoc.flow.transformer', index_by: 'documentation_type' }]
+
+    phpDocumentor\FlowService\Api\Parser:
+      tags:
+        - { name: 'phpdoc.flow.parser', documentation_type: 'phpDocumentor\Descriptor\ApiSetDescriptor' }
+
+    phpDocumentor\FlowService\Api\Transformer:
+      tags:
+        - { name: 'phpdoc.flow.transformer', documentation_type: 'phpDocumentor\Descriptor\ApiSetDescriptor' }
+
+    ###################################################################################
     ## Autoloading definitions for individual classes #################################
     ###################################################################################
 
@@ -222,7 +242,6 @@ services:
             - { method: offsetSet, arguments: ['sourcecode', '@phpDocumentor\Transformer\Writer\Sourcecode']}
             - { method: offsetSet, arguments: ['Graph', '@phpDocumentor\Transformer\Writer\Graph']}
             - { method: offsetSet, arguments: ['twig', '@phpDocumentor\Transformer\Writer\Twig']}
-            - { method: offsetSet, arguments: ['RenderGuide', '@phpDocumentor\Transformer\Writer\RenderGuide']}
 
     phpDocumentor\Transformer\Writer\Graph\PlantumlRenderer:
       arguments:
@@ -233,13 +252,15 @@ services:
     ###################################################################################
     Doctrine\Common\EventManager: ~
 
-    phpDocumentor\Transformer\Writer\RenderGuide:
-
-    phpDocumentor\Pipeline\Stage\Parser\ParseGuides:
+    phpDocumentor\FlowService\Guide\Parser:
       arguments:
         $outputFormats: !tagged_iterator phpdoc.guides.format
       tags:
-        - { name: 'phpdoc.pipeline.api_documentation.parse', priority: 0 }
+        - { name: 'phpdoc.flow.parser', documentation_type: 'phpDocumentor\Descriptor\GuideSetDescriptor' }
+
+    phpDocumentor\FlowService\Guide\RenderGuide:
+      tags:
+        - { name: 'phpdoc.flow.transformer', documentation_type: 'phpDocumentor\Descriptor\GuideSetDescriptor' }
 
     phpDocumentor\Pipeline\Stage\Cache\LoadGuidesFromCache:
       tags:

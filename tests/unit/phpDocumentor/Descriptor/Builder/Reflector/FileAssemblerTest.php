@@ -13,12 +13,10 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Descriptor\Builder\Reflector;
 
+use phpDocumentor\Descriptor\ApiSetDescriptorBuilder;
 use phpDocumentor\Descriptor\Collection;
 use phpDocumentor\Descriptor\DescriptorAbstract;
 use phpDocumentor\Descriptor\PackageDescriptor;
-use phpDocumentor\Descriptor\ProjectDescriptor;
-use phpDocumentor\Descriptor\ProjectDescriptor\Settings;
-use phpDocumentor\Descriptor\ProjectDescriptorBuilder;
 use phpDocumentor\Reflection\DocBlock;
 use phpDocumentor\Reflection\Php\File;
 use PHPUnit\Framework\TestCase;
@@ -50,7 +48,7 @@ final class FileAssemblerTest extends TestCase
         $this->defaultPackage = new PackageDescriptor();
         $this->defaultPackage->setName('\\PhpDocumentor');
         $this->fixture = new FileAssembler();
-        $this->fixture->setBuilder($this->getProjectDescriptorBuilderMock()->reveal());
+        $this->fixture->setBuilder($this->getApiSetDescriptorBuilderMock()->reveal());
     }
 
     /**
@@ -86,22 +84,13 @@ DOCBLOCK
     /**
      * Create a descriptor builder mock
      */
-    protected function getProjectDescriptorBuilderMock() : ObjectProphecy
+    protected function getApiSetDescriptorBuilderMock() : ObjectProphecy
     {
-        $settings = new Settings();
-        $settings->includeSource();
+        $ApiSetDescriptorBuilderMock = $this->prophesize(ApiSetDescriptorBuilder::class);
+        $ApiSetDescriptorBuilderMock->getDefaultPackage()->shouldBeCalled()->willReturn($this->defaultPackage);
+        $ApiSetDescriptorBuilderMock->shouldIncludeSource()->shouldBeCalled()->willReturn(true);
 
-        $projectDescriptor = $this->prophesize(ProjectDescriptor::class);
-        $projectDescriptor->getSettings()->shouldBeCalled()->willReturn($settings);
-
-        $projectDescriptorBuilderMock = $this->prophesize(ProjectDescriptorBuilder::class);
-        $projectDescriptorBuilderMock->getDefaultPackage()->shouldBeCalled()->willReturn($this->defaultPackage);
-        $projectDescriptorBuilderMock
-            ->getProjectDescriptor()
-            ->shouldBeCalled()
-            ->willReturn($projectDescriptor->reveal());
-
-        $projectDescriptorBuilderMock->buildDescriptor(Argument::any(), Argument::any())->will(function () {
+        $ApiSetDescriptorBuilderMock->buildDescriptor(Argument::any(), Argument::any())->will(function () {
             $mock = $this->prophesize(DescriptorAbstract::class);
             $mock->setLocation(Argument::any())->shouldBeCalled();
             $mock->getTags()->shouldBeCalled()->willReturn(new Collection());
@@ -110,6 +99,6 @@ DOCBLOCK
             return $mock->reveal();
         });
 
-        return $projectDescriptorBuilderMock;
+        return $ApiSetDescriptorBuilderMock;
     }
 }

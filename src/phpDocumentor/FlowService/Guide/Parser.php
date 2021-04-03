@@ -11,18 +11,21 @@ declare(strict_types=1);
  * @link https://phpdoc.org
  */
 
-namespace phpDocumentor\Pipeline\Stage\Parser;
+namespace phpDocumentor\FlowService\Guide;
 
+use InvalidArgumentException;
 use League\Tactician\CommandBus;
+use phpDocumentor\Descriptor\DocumentationSetDescriptor;
+use phpDocumentor\Descriptor\GuideSetDescriptor;
+use phpDocumentor\FileSystem\FlySystemFactory;
+use phpDocumentor\FlowService\Parser as ParserInterface;
 use phpDocumentor\Guides\Configuration;
 use phpDocumentor\Guides\Formats\Format;
 use phpDocumentor\Guides\RestructuredText\ParseDirectoryCommand;
-use phpDocumentor\Parser\FlySystemFactory;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-use function current;
 
-final class ParseGuides
+final class Parser implements ParserInterface
 {
     /** @var CommandBus */
     private $commandBus;
@@ -51,29 +54,23 @@ final class ParseGuides
         $this->flySystemFactory = $flySystemFactory;
     }
 
-    public function __invoke(Payload $payload) : Payload
+    public function operate(DocumentationSetDescriptor $documentationSet) : void
     {
-        if ($payload->getConfig()['phpdocumentor']['settings']['guides.enabled'] === true) {
-            /*
-             * For now settings of the first guides are used.
-             * We need to change this later, when we accept more different things
-             */
-            $config = current(current($payload->getConfig()['phpdocumentor']['versions'])->guides);
-            $dsn = $config->source()->dsn();
-            $inputFormat = $config['format'];
-
-            $this->log('Parsing guides', LogLevel::NOTICE);
-
-            $origin = $this->flySystemFactory->create($dsn);
-            $directory = $config->source()->paths()[0] ?? '';
-
-            $configuration = new Configuration($inputFormat, $this->outputFormats);
-            $configuration->setOutputFolder((string) $config['output']);
-
-            $this->commandBus->handle(new ParseDirectoryCommand($configuration, $origin, (string) $directory));
+        if (!$documentationSet instanceof GuideSetDescriptor) {
+            throw new InvalidArgumentException('Invalid documentation set');
         }
 
-        return $payload;
+        $this->log('Parsing guides', LogLevel::NOTICE);
+
+        $source = $documentationSet->getSource();
+        $origin = $this->flySystemFactory->create($documentationSet->getSource()->dsn());
+        $directory = $source['paths'][0] ?? '';
+        $inputFormat = $documentationSet->getInputFormat();
+
+        $configuration = new Configuration($inputFormat, $this->outputFormats);
+        $configuration->setOutputFolder($documentationSet->getOutput());
+
+        $this->commandBus->handle(new ParseDirectoryCommand($configuration, $origin, (string) $directory));
     }
 
     /**

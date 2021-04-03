@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Descriptor\Builder;
 
-use phpDocumentor\Descriptor\ProjectDescriptorBuilder;
+use phpDocumentor\Descriptor\ApiSetDescriptorBuilder;
 
 /**
  * @template TDescriptor of \phpDocumentor\Descriptor\Descriptor
@@ -32,5 +32,5 @@ interface AssemblerInterface
     public function create(object $data);
     //phpcs:enable
 
-    public function setBuilder(ProjectDescriptorBuilder $builder) : void;
+    public function setBuilder(ApiSetDescriptorBuilder $builder) : void;
 }

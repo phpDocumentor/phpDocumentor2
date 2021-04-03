@@ -52,7 +52,7 @@ class FileAssembler extends AssemblerAbstract
 
         $fileDescriptor->setName($data->getName());
         $fileDescriptor->setPath($data->getPath());
-        if ($this->getBuilder()->getProjectDescriptor()->getSettings()->shouldIncludeSource()) {
+        if ($this->getBuilder()->shouldIncludeSource()) {
             $fileDescriptor->setSource($data->getSource());
         }
 

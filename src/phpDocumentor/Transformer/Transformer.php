@@ -14,10 +14,11 @@ declare(strict_types=1);
 namespace phpDocumentor\Transformer;
 
 use League\Flysystem\FilesystemInterface;
+use phpDocumentor\Descriptor\DocumentationSetDescriptor;
 use phpDocumentor\Descriptor\ProjectDescriptor;
 use phpDocumentor\Dsn;
 use phpDocumentor\Event\Dispatcher;
-use phpDocumentor\Parser\FlySystemFactory;
+use phpDocumentor\FileSystem\FlySystemFactory;
 use phpDocumentor\Transformer\Event\PostTransformationEvent;
 use phpDocumentor\Transformer\Event\PreTransformationEvent;
 use phpDocumentor\Transformer\Event\WriterInitializationEvent;
@@ -32,7 +33,7 @@ use function sprintf;
 /**
  * Core class responsible for transforming the cache file to a set of artifacts.
  */
-class Transformer
+class Transformer implements \phpDocumentor\FlowService\Transformer
 {
     public const EVENT_PRE_TRANSFORMATION = 'transformer.transformation.pre';
 
@@ -120,10 +121,10 @@ class Transformer
      *
      * @param Transformation[] $transformations
      */
-    public function execute(ProjectDescriptor $project, array $transformations) : void
+    public function execute(ProjectDescriptor $project, DocumentationSetDescriptor $documentationSet, Template $template) : void
     {
-        $this->initializeWriters($project, $transformations);
-        $this->transformProject($project, $transformations);
+        $this->initializeWriters($project, $template);
+        $this->transformProject($documentationSet, $template);
 
         $this->logger->log(LogLevel::NOTICE, 'Finished transformation process');
     }
@@ -133,10 +134,10 @@ class Transformer
      *
      * @param Transformation[] $transformations
      */
-    private function initializeWriters(ProjectDescriptor $project, array $transformations) : void
+    private function initializeWriters(ProjectDescriptor $project, Template $template) : void
     {
         $isInitialized = [];
-        foreach ($transformations as $transformation) {
+        foreach ($template as $transformation) {
             $writerName = $transformation->getWriter();
 
             if (in_array($writerName, $isInitialized, true)) {
@@ -184,11 +185,11 @@ class Transformer
      *
      * @param Transformation[] $transformations
      */
-    private function transformProject(ProjectDescriptor $project, array $transformations) : void
+    private function transformProject(DocumentationSetDescriptor $documentationSet, Template $template) : void
     {
-        foreach ($transformations as $transformation) {
+        foreach ($template as $transformation) {
             $transformation->setTransformer($this);
-            $this->applyTransformationToProject($transformation, $project);
+            $this->applyTransformationToProject($transformation, $documentationSet);
         }
     }
 
@@ -205,7 +206,7 @@ class Transformer
      *
      * @uses Dispatcher to emit the events surrounding a transformation.
      */
-    private function applyTransformationToProject(Transformation $transformation, ProjectDescriptor $project) : void
+    private function applyTransformationToProject(Transformation $transformation, DocumentationSetDescriptor $documentationSet) : void
     {
         $this->logger->log(
             LogLevel::NOTICE,
@@ -221,7 +222,7 @@ class Transformer
         Dispatcher::getInstance()->dispatch($preTransformationEvent, self::EVENT_PRE_TRANSFORMATION);
 
         $writer = $this->writers[$transformation->getWriter()];
-        $writer->transform($project, $transformation);
+        $writer->transform($documentationSet, $transformation);
 
         $postTransformationEvent = PostTransformationEvent::createInstance($this);
         Dispatcher::getInstance()->dispatch($postTransformationEvent, self::EVENT_POST_TRANSFORMATION);

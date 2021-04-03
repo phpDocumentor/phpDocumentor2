@@ -6,7 +6,7 @@ namespace phpDocumentor\Pipeline\Stage\Cache;
 
 use League\Tactician\CommandBus;
 use phpDocumentor\Guides\LoadCacheCommand;
-use phpDocumentor\Pipeline\Stage\Parser\Payload;
+use phpDocumentor\Pipeline\Stage\Payload;
 use Psr\Log\LoggerInterface;
 
 final class LoadGuidesFromCache

@@ -16,10 +16,10 @@
     <section class="phpdocumentor-sidebar__category">
         <h2 class="phpdocumentor-sidebar__category-header">Namespaces</h2>
         {% if usesNamespaces or not usesPackages %}
-            {% if project.namespace.functions is not empty or project.namespace.constants is not empty or project.namespace.classes is not empty or project.namespace.interfaces is not empty or project.namespace.traits is not empty %}
-            <h3 class="phpdocumentor-sidebar__root-namespace">{{ project.namespace|route('Global') }}</h3>
+            {% if documentationSet.namespace.functions is not empty or documentationSet.namespace.constants is not empty or documentationSet.namespace.classes is not empty or documentationSet.namespace.interfaces is not empty or documentationSet.namespace.traits is not empty %}
+            <h3 class="phpdocumentor-sidebar__root-namespace">{{ documentationSet.namespace|route('Global') }}</h3>
             {% endif %}
-            {% for namespace in project.namespace.children %}
+            {% for namespace in documentationSet.namespace.children %}
                 <h4 class="phpdocumentor-sidebar__root-namespace">{{ namespace|route('class:short') }}</h4>
                 <ul class="phpdocumentor-list">
                     {% for child in namespace.children %}
@@ -33,7 +33,7 @@
     {% if usesPackages %}
     <section class="phpdocumentor-sidebar__category">
         <h2 class="phpdocumentor-sidebar__category-header">Packages</h2>
-        {% for package in project.package.children %}
+        {% for package in documentationSet.package.children %}
             <h3 class="phpdocumentor-sidebar__root-package">{{ package|route('class:short') }}</h3>
             {% if package.children is not empty %}
             <ul class="phpdocumentor-list">

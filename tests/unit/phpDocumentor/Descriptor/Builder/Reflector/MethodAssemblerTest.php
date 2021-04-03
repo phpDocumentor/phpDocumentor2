@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Descriptor\Builder\Reflector;
 
+use phpDocumentor\Descriptor\ApiSetDescriptorBuilder;
 use phpDocumentor\Descriptor\ArgumentDescriptor;
-use phpDocumentor\Descriptor\ProjectDescriptorBuilder;
 use phpDocumentor\Reflection\DocBlock;
 use phpDocumentor\Reflection\Fqsen;
 use phpDocumentor\Reflection\Php\Argument;
@@ -36,7 +36,7 @@ class MethodAssemblerTest extends TestCase
     /** @var ArgumentAssembler|ObjectProphecy */
     protected $argumentAssemblerMock;
 
-    /** @var ProjectDescriptorBuilder|ObjectProphecy */
+    /** @var ApiSetDescriptorBuilder|ObjectProphecy */
     protected $builderMock;
 
     /**
@@ -44,7 +44,7 @@ class MethodAssemblerTest extends TestCase
      */
     protected function setUp() : void
     {
-        $this->builderMock = $this->prophesize(ProjectDescriptorBuilder::class);
+        $this->builderMock = $this->prophesize(ApiSetDescriptorBuilder::class);
         $this->builderMock->buildDescriptor(ProphecyArgument::any(), ProphecyArgument::any())->willReturn(null);
 
         $this->argumentAssemblerMock = $this->prophesize(ArgumentAssembler::class);

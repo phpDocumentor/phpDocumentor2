@@ -18,6 +18,7 @@ use phpDocumentor\Descriptor\Interfaces\PackageInterface;
 use phpDocumentor\Descriptor\ProjectDescriptor\Settings;
 use phpDocumentor\Reflection\DocBlock\Description;
 use phpDocumentor\Reflection\Fqsen;
+use function current;
 
 /**
  * Represents the entire project with its files, namespaces and indexes.
@@ -29,18 +30,6 @@ class ProjectDescriptor implements Interfaces\ProjectInterface, Descriptor
 {
     /** @var string $name */
     private $name = '';
-
-    /** @var NamespaceDescriptor $namespace */
-    private $namespace;
-
-    /** @var PackageInterface $package */
-    private $package;
-
-    /** @var Collection<FileDescriptor> $files */
-    private $files;
-
-    /** @var Collection<Collection<DescriptorAbstract>> $indexes */
-    private $indexes;
 
     /** @var Settings $settings */
     private $settings;
@@ -61,20 +50,6 @@ class ProjectDescriptor implements Interfaces\ProjectInterface, Descriptor
     {
         $this->setName($name);
         $this->setSettings(new Settings());
-
-        $namespace = new NamespaceDescriptor();
-        $namespace->setName('\\');
-        $namespace->setFullyQualifiedStructuralElementName(new Fqsen('\\'));
-        $this->setNamespace($namespace);
-
-        $package = new PackageDescriptor();
-        $package->setName('\\');
-        $package->setFullyQualifiedStructuralElementName(new Fqsen('\\'));
-        $this->setPackage($package);
-
-        $this->setFiles(new Collection());
-        $this->setIndexes(new Collection());
-
         $this->setPartials(new Collection());
         $this->versions = Collection::fromClassString(VersionDescriptor::class);
 
@@ -103,68 +78,6 @@ class ProjectDescriptor implements Interfaces\ProjectInterface, Descriptor
     public function getDescription() : DescriptionDescriptor
     {
         return $this->description;
-    }
-
-    /**
-     * Sets all files on this project.
-     *
-     * @param Collection<FileDescriptor> $files
-     */
-    public function setFiles(Collection $files) : void
-    {
-        $this->files = $files;
-    }
-
-    /**
-     * Returns all files with their sub-elements.
-     *
-     * @return Collection<FileDescriptor>
-     */
-    public function getFiles() : Collection
-    {
-        return $this->files;
-    }
-
-    /**
-     * Sets all indexes for this project.
-     *
-     * An index is a compilation of references to elements, usually constructed in a compiler step, that aids template
-     * generation by providing a conveniently assembled list. An example of such an index is the 'marker' index where
-     * a list of TODOs and FIXMEs are located in a central location for reporting.
-     *
-     * @param Collection<Collection<DescriptorAbstract>> $indexes
-     */
-    public function setIndexes(Collection $indexes) : void
-    {
-        $this->indexes = $indexes;
-    }
-
-    /**
-     * Returns all indexes in this project.
-     *
-     * @see setIndexes() for more information on what indexes are.
-     *
-     * @return Collection<Collection<DescriptorAbstract>>
-     */
-    public function getIndexes() : Collection
-    {
-        return $this->indexes;
-    }
-
-    /**
-     * Sets the root namespace for this project together with all sub-namespaces.
-     */
-    public function setNamespace(NamespaceDescriptor $namespace) : void
-    {
-        $this->namespace = $namespace;
-    }
-
-    /**
-     * Returns the root (global) namespace.
-     */
-    public function getNamespace() : NamespaceDescriptor
-    {
-        return $this->namespace;
     }
 
     /**
@@ -206,25 +119,6 @@ class ProjectDescriptor implements Interfaces\ProjectInterface, Descriptor
     public function getPartials() : Collection
     {
         return $this->partials;
-    }
-
-    public function findElement(Fqsen $fqsen) : ?Descriptor
-    {
-        if (!isset($this->getIndexes()['elements'])) {
-            return null;
-        }
-
-        return $this->getIndexes()['elements']->fetch((string) $fqsen);
-    }
-
-    private function setPackage(PackageInterface $package) : void
-    {
-        $this->package = $package;
-    }
-
-    public function getPackage() : PackageInterface
-    {
-        return $this->package;
     }
 
     /**

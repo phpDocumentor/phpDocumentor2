@@ -11,17 +11,17 @@ declare(strict_types=1);
  * @link https://phpdoc.org
  */
 
-namespace phpDocumentor\Transformer\Writer;
+namespace phpDocumentor\FlowService\Guide;
 
 use League\Tactician\CommandBus;
 use phpDocumentor\Descriptor\DocumentationSetDescriptor;
-use phpDocumentor\Descriptor\GuideSetDescriptor;
 use phpDocumentor\Descriptor\ProjectDescriptor;
-use phpDocumentor\Descriptor\VersionDescriptor;
 use phpDocumentor\Dsn;
+use phpDocumentor\FileSystem\FileSystemFactory;
+use phpDocumentor\FlowService\Transformer;
 use phpDocumentor\Guides\RenderCommand;
 use phpDocumentor\Guides\Renderer;
-use phpDocumentor\Transformer\Transformation;
+use phpDocumentor\Transformer\Template;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Stopwatch\Stopwatch;
 use function sprintf;
@@ -29,7 +29,7 @@ use function sprintf;
 /**
  * @experimental Do not use; this stage is meant as a sandbox / playground to experiment with generating guides.
  */
-final class RenderGuide extends WriterAbstract implements ProjectDescriptor\WithCustomSettings
+final class RenderGuide implements Transformer, ProjectDescriptor\WithCustomSettings
 {
     public const FEATURE_FLAG = 'guides.enabled';
 
@@ -42,56 +42,38 @@ final class RenderGuide extends WriterAbstract implements ProjectDescriptor\With
     /** @var Renderer */
     private $renderer;
 
-    public function __construct(Renderer $renderer, LoggerInterface $logger, CommandBus $commandBus)
+    /** @var FileSystemFactory */
+    private $fileSystems;
+
+    public function __construct(Renderer $renderer, LoggerInterface $logger, CommandBus $commandBus, FileSystemFactory $fileSystems)
     {
         $this->logger = $logger;
         $this->commandBus = $commandBus;
         $this->renderer = $renderer;
+        $this->fileSystems = $fileSystems;
     }
 
-    public function transform(ProjectDescriptor $project, Transformation $transformation) : void
+    public function execute(ProjectDescriptor $project, DocumentationSetDescriptor $documentationSet, Template $template) : void
     {
-        // Feature flag: Guides are disabled by default since this is an experimental feature
-        if (!($project->getSettings()->getCustom()[self::FEATURE_FLAG])) {
-            return;
-        }
-
         $this->logger->warning(
             'Generating guides is experimental, no BC guarantees are given, use at your own risk'
         );
 
-        /** @var VersionDescriptor $version */
-        foreach ($project->getVersions() as $version) {
-            foreach ($version->getDocumentationSets() as $documentationSet) {
-                if (!$documentationSet instanceof GuideSetDescriptor) {
-                    continue;
-                }
+        $dsn = $documentationSet->getSource()->dsn();
+        $stopwatch = $this->startRenderingSetMessage($dsn);
 
-                $this->renderDocumentationSet($documentationSet, $project, $transformation);
-            }
-        }
+        $this->renderer->initialize($project, $documentationSet, $template);
+
+        $this->commandBus->handle(
+            new RenderCommand($this->fileSystems->createDestination($documentationSet))
+        );
+
+        $this->completedRenderingSetMessage($stopwatch, $dsn);
     }
 
     public function getDefaultSettings() : array
     {
         return [self::FEATURE_FLAG => false];
-    }
-
-    private function renderDocumentationSet(
-        DocumentationSetDescriptor $documentationSet,
-        ProjectDescriptor $project,
-        Transformation $transformation
-    ) : void {
-        $dsn = $documentationSet->getSource()->dsn();
-        $stopwatch = $this->startRenderingSetMessage($dsn);
-
-        $this->renderer->initialize($project, $documentationSet, $transformation);
-
-        $this->commandBus->handle(
-            new RenderCommand($transformation->getTransformer()->destination())
-        );
-
-        $this->completedRenderingSetMessage($stopwatch, $dsn);
     }
 
     private function startRenderingSetMessage(Dsn $dsn) : Stopwatch

@@ -16,7 +16,7 @@ namespace phpDocumentor\Guides;
 use phpDocumentor\Descriptor\DocumentationSetDescriptor;
 use phpDocumentor\Descriptor\ProjectDescriptor;
 use phpDocumentor\Guides\Twig\AssetsExtension;
-use phpDocumentor\Transformer\Transformation;
+use phpDocumentor\Transformer\Template;
 use phpDocumentor\Transformer\Writer\Graph\PlantumlRenderer;
 use phpDocumentor\Transformer\Writer\Twig\EnvironmentFactory;
 use Psr\Log\LoggerInterface;
@@ -53,21 +53,21 @@ class Renderer
     public function initialize(
         ProjectDescriptor $project,
         DocumentationSetDescriptor $documentationSet,
-        Transformation $transformation
+        Template $template
     ) : void {
         $targetDirectory = $documentationSet->getOutput();
 
-        $this->environment = $this->environmentFactory->create($project, $transformation->template());
+        $this->environment = $this->environmentFactory->create($project, $template);
         $this->environment->addExtension(new AssetsExtension($this->logger, $this->plantumlRenderer));
         $this->environment->addGlobal('project', $project);
-        $this->environment->addGlobal('usesNamespaces', count($project->getNamespace()->getChildren()) > 0);
-        $this->environment->addGlobal('usesPackages', count($project->getPackage()->getChildren()) > 1);
-        $this->environment->addGlobal('documentationSet', $project);
+//        $this->environment->addGlobal('usesNamespaces', count($project->getNamespace()->getChildren()) > 0);
+//        $this->environment->addGlobal('usesPackages', count($project->getPackage()->getChildren()) > 1);
+        $this->environment->addGlobal('documentationSet', $documentationSet);
         $this->environment->addGlobal('destinationPath', $targetDirectory);
 
         // pre-set the global variable so that we can update it later
         $this->environment->addGlobal('env', null);
-        $this->environment->addGlobal('destination', $transformation->getTransformer()->destination());
+      //  $this->environment->addGlobal('destination', $transformation->getTransformer()->destination());
 
         $this->templateRenderer = new TemplateRenderer($this->environment, 'guides', $targetDirectory);
     }

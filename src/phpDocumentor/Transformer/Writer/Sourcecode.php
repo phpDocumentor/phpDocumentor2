@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Transformer\Writer;
 
+use phpDocumentor\Descriptor\DocumentationSetDescriptor;
 use phpDocumentor\Descriptor\FileDescriptor;
-use phpDocumentor\Descriptor\ProjectDescriptor;
 use phpDocumentor\Transformer\Transformation;
 use function dirname;
 use function file_exists;
@@ -33,10 +33,10 @@ class Sourcecode extends WriterAbstract
     /**
      * This method writes every source code entry in the structure file to a highlighted file.
      *
-     * @param ProjectDescriptor $project        Document containing the structure.
-     * @param Transformation    $transformation Transformation to execute.
+     * @param DocumentationSetDescriptor $documentationSet Document containing the structure.
+     * @param Transformation $transformation Transformation to execute.
      */
-    public function transform(ProjectDescriptor $project, Transformation $transformation) : void
+    public function transform(DocumentationSetDescriptor $documentationSet, Transformation $transformation) : void
     {
         $artifact = $transformation->getTransformer()->getTarget()
             . DIRECTORY_SEPARATOR
@@ -44,7 +44,7 @@ class Sourcecode extends WriterAbstract
                 ?: 'source');
 
         /** @var FileDescriptor $file */
-        foreach ($project->getFiles() as $file) {
+        foreach ($documentationSet->getFiles() as $file) {
             $filename = $file->getPath();
             $source   = $file->getSource();
 

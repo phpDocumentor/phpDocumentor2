@@ -396,6 +396,7 @@ final class Extension extends AbstractExtension implements ExtensionInterface, G
     {
         return $this->routeRenderer
             ->withDestination(ltrim($context['destinationPath'], '/\\'))
-            ->withProject($context['project']);
+            ->withProject($context['project'])
+            ->withDocumentationSet($context['documentationSet']);
     }
 }

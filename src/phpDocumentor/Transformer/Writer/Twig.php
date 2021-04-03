@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Transformer\Writer;
 
+use phpDocumentor\Descriptor\DocumentationSetDescriptor;
 use phpDocumentor\Descriptor\ProjectDescriptor;
 use phpDocumentor\Transformer\Template;
 use phpDocumentor\Transformer\Transformation;
@@ -108,25 +109,26 @@ final class Twig extends WriterAbstract implements Initializable
     public function initialize(ProjectDescriptor $project, Template $template) : void
     {
         $this->environment = $this->environmentFactory->create($project, $template);
+        $this->environment->addGlobal('project', $project);
     }
 
     /**
      * This method combines the ProjectDescriptor and the given target template
      * and creates a static html page at the artifact location.
      *
-     * @param ProjectDescriptor $project Document containing the structure.
+     * @param DocumentationSetDescriptor $documentationSet Document containing the structure.
      * @param Transformation $transformation Transformation to execute.
      *
      * @throws LoaderError
      * @throws RuntimeError
      * @throws SyntaxError
      */
-    public function transform(ProjectDescriptor $project, Transformation $transformation) : void
+    public function transform(DocumentationSetDescriptor $documentationSet, Transformation $transformation) : void
     {
         $templatePath = $this->getTemplatePath($transformation);
 
         $finder = new Pathfinder();
-        $nodes = $finder->find($project, $transformation->getQuery());
+        $nodes = $finder->find($documentationSet, $transformation->getQuery());
 
         foreach ($nodes as $node) {
             if (!$node) {
@@ -138,10 +140,9 @@ final class Twig extends WriterAbstract implements Initializable
                 continue;
             }
 
-            $this->environment->addGlobal('project', $project);
-            $this->environment->addGlobal('usesNamespaces', count($project->getNamespace()->getChildren()) > 0);
-            $this->environment->addGlobal('usesPackages', count($project->getPackage()->getChildren()) > 1);
-            $this->environment->addGlobal('documentationSet', $project);
+            $this->environment->addGlobal('usesNamespaces', count($documentationSet->getNamespace()->getChildren()) > 0);
+            $this->environment->addGlobal('usesPackages', count($documentationSet->getPackage()->getChildren()) > 1);
+            $this->environment->addGlobal('documentationSet', $documentationSet);
             $this->environment->addGlobal('node', $node);
             $this->environment->addGlobal('destinationPath', $path);
 
